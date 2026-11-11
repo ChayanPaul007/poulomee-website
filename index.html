@@ -167,6 +167,21 @@ section{padding:120px 32px;max-width:1200px;margin:0 auto;position:relative}
 .sheet{clip-path:circle(0% at 25% 0%);transition:clip-path 1.6s cubic-bezier(.7,0,.2,1);margin-top:64px;background:#1e1b33;color:#efe6d6;padding:28px;border-radius:6px;
   background-image:repeating-linear-gradient(90deg,transparent 0 22px,rgba(255,255,255,.05) 22px 34px);background-size:100% 14px;background-repeat:repeat-x;}
 .sheet.open{clip-path:circle(150% at 25% 0%)}
+.sheet:not(.open){max-height:0;padding-top:0;padding-bottom:0;margin-top:0;overflow:hidden}
+/* film strip */
+.film{margin-top:56px;background:#1e1b33;padding:22px 0;position:relative;overflow:hidden;border-radius:4px;transform:rotate(-1.2deg)}
+.film::before,.film::after{content:"";position:absolute;left:0;right:0;height:10px;background:repeating-linear-gradient(90deg,transparent 0 10px,#f5eee3 10px 22px,transparent 22px 34px);opacity:.85}
+.film::before{top:6px}.film::after{bottom:6px}
+.film-track{display:flex;gap:12px;width:max-content;animation:filmroll 60s linear infinite}
+.film:hover .film-track{animation-play-state:paused}
+@keyframes filmroll{to{transform:translateX(-50%)}}
+.film-track button{border:none;padding:0;background:none;cursor:zoom-in;flex:none}
+.film-track img{height:150px;width:210px;object-fit:cover;display:block;filter:saturate(.85);transition:filter .4s,transform .4s}
+.film-track button:hover img{filter:saturate(1.2);transform:scale(1.04)}
+.film-track .ig{height:150px;width:210px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:#efe6d6;text-decoration:none;background:linear-gradient(135deg,#d0602a,#3b5b86);font-family:var(--mono);font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;flex:none;transition:filter .3s}
+.film-track .ig:hover{filter:brightness(1.15)}
+.film-track .ig b{font-family:var(--bn);font-size:1.6rem;text-transform:none;letter-spacing:0;font-weight:400}
+@media(max-width:600px){.film-track img,.film-track .ig{height:110px;width:150px}}
 .sheet-head{display:flex;justify-content:space-between;color:#c9962b;margin:10px 0 22px;font-size:.7rem}
 .prints{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:22px}
 .print{background:#f6f0e4;padding:8px 8px 30px;cursor:zoom-in;position:relative;transform:rotate(var(--r)) translateY(30px);opacity:0;
@@ -365,6 +380,7 @@ footer .big:hover{color:var(--vermilion);font-style:italic}
       <p style="margin-top:20px"><a href="https://www.instagram.com/p.g.___/" target="_blank" rel="noopener">More on Instagram →</a></p>
     </div>
   </div>
+  <div class="film reveal" aria-label="Photographs by Poulomee Ghosh"><div class="film-track" id="filmTrack"></div></div>
   <div id="sheet" class="sheet" aria-hidden="true">
     <div class="sheet-head mono"><span>Contact sheet · Poulomee Ghosh</span><span id="frameCount"></span></div>
     <div class="prints" id="prints"></div>
@@ -498,13 +514,16 @@ addEventListener('scroll',()=>{const w=$('#tlwrap'),r=w.getBoundingClientRect();
   const src=(id,w)=>`https://static.wixstatic.com/media/3fba2c_${id}/v1/fill/w_${w},h_${w},al_c,q_85/p.jpg`;
   const full=id=>`https://static.wixstatic.com/media/3fba2c_${id}/v1/fit/w_1600,h_1600,q_90/p.jpg`;
   $('#frameCount').textContent=IDS.length+' frames';
+  const IG='<a class="ig" href="https://www.instagram.com/p.g.___/" target="_blank" rel="noopener"><b>মুহূর্ত</b>More on Instagram ↗</a>';
+  const strip=IDS.map((id,i)=>`<button data-i="${i}" aria-label="Open photo ${i+1}"><img loading="lazy" src="${src(id,420)}" alt="Photograph ${i+1} by Poulomee Ghosh"></button>`).join('')+IG;
+  $('#filmTrack').innerHTML=strip+strip;
   $('#prints').innerHTML=IDS.map((id,i)=>`<button class="print" style="--r:${((i*37)%9-4)*.8}deg;transition-delay:${.6+i*.07}s" data-i="${i}" aria-label="Open photo ${i+1}"><img loading="lazy" src="${src(id,500)}" alt="Photograph ${i+1} by Poulomee Ghosh"><span>${String(i+1).padStart(2,'0')}A</span></button>`).join('');
   // lens preview cycles through photos
   const li=$('#lensImg');let k=0;const cyc=()=>{li.style.opacity=0;setTimeout(()=>{li.setAttribute('href',src(IDS[k++%IDS.length],600));li.style.opacity=.9},800)};cyc();setInterval(cyc,4000);
   // lightbox
   const lb=$('#lightbox');let cur=0;
   const show=i=>{cur=(i+IDS.length)%IDS.length;lb.querySelector('img').src=full(IDS[cur]);lb.querySelector('img').alt=`Photograph ${cur+1} by Poulomee Ghosh`;lb.querySelector('figcaption').textContent=`Frame ${String(cur+1).padStart(2,'0')} / ${IDS.length}`};
-  $$('.print').forEach(p=>p.onclick=()=>{show(+p.dataset.i);lb.classList.add('open');lb.querySelector('.lb-x').focus()});
+  $$('.print,#filmTrack button').forEach(p=>p.onclick=()=>{show(+p.dataset.i);lb.classList.add('open');lb.querySelector('.lb-x').focus()});
   lb.querySelector('.lb-x').onclick=()=>lb.classList.remove('open');
   lb.onclick=e=>{if(e.target===lb)lb.classList.remove('open')};
   lb.querySelector('.lb-prev').onclick=()=>show(cur-1);lb.querySelector('.lb-next').onclick=()=>show(cur+1);
